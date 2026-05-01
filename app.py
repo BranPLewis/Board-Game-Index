@@ -20,10 +20,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+import os
+
 # --- Database Connection ---
 @st.cache_resource
 def get_db_connection():
-    return psycopg.connect("dbname=bgg user=risky host=localhost")
+    # Use DATABASE_URL if provided (e.g., Railway), otherwise fallback to local DB
+    db_url = os.environ.get("DATABASE_URL", "dbname=bgg user=risky host=localhost")
+    return psycopg.connect(db_url)
 
 conn = get_db_connection()
 
