@@ -1,0 +1,52 @@
+# Presentation Outline: Board Game Index
+
+## Slide 1: Title Slide
+* **Title:** Board Game Index
+* **Subtitle:** Building a Lightning-Fast Relational Database & Web App for BoardGameGeek Data
+* **Presenter:** [Your Name]
+
+## Slide 2: The Dataset & Original Structure
+* **Source:** BoardGameGeek (BGG) CSV dataset
+* **Volume:** 
+  * Metadata for over 21,000 board games
+  * Over 19 million individual user ratings
+* **Original Structure Challenges:**
+  * Spread across multiple flat CSV files.
+  * Massive "Wide" CSVs: Files for mechanics, themes, and publishers used a binary matrix format (hundreds of columns representing every single possible tag with a 1 or 0).
+  * Highly inefficient for dynamic filtering or complex queries.
+
+## Slide 3: Database Normalization & Tables
+* **Goal:** Convert flat, wide CSVs into a structured, query-optimized Relational Database (PostgreSQL).
+* **The Tables We Generated:**
+  * **Core/Fact Tables:** `games` (21k rows), `user_ratings` (19M rows), `ratings_distribution`
+  * **Dimension Tables:** `mechanics` (157 rows), `themes` (217 rows), `publishers`, `artists`, `designers`, `subcategories`
+  * **Join/Bridge Tables (Many-to-Many):** `game_mechanics` (68k rows), `game_themes`, etc.
+* **Result:** Eliminated empty columns, removed redundancy, and structured the data for dynamic SQL joining.
+
+## Slide 4: Key SQL Queries
+* **1. Bulk Data Ingestion (The 19 Million Rows):**
+  * Used PostgreSQL's highly optimized `COPY` command instead of standard `INSERT` to load the massive `user_ratings` table in seconds.
+* **2. Safe Upserts (Handling Duplicates):**
+  * `INSERT INTO games (...) VALUES (...) ON CONFLICT (bgg_id) DO UPDATE SET ...`
+* **3. Dynamic UI Filtering:**
+  * Used `EXISTS` subqueries to allow users to select multiple overlapping tags (e.g., finding games that have *both* 'Drafting' and 'Sci-Fi'):
+  * `AND EXISTS (SELECT 1 FROM game_mechanics jt JOIN mechanics dt ON jt.mechanic_id = dt.mechanic_id WHERE jt.bgg_id = g.bgg_id AND dt.name = 'Deck Building')`
+
+## Slide 5: The User Interface (UI)
+* **Framework:** Built entirely in Python using **Streamlit**.
+* **Features:**
+  * **Live Search:** Instantly query by board game title.
+  * **Sliders:** Intuitive controls for Player Count, Max Playtime, Complexity (Weight), Average Rating, and Year Published.
+  * **Dropdowns:** Multi-select filtering for Themes, Mechanics, and Categories.
+  * **Data Display:** Clean, auto-sizing, responsive data grid showing the filtered results ranked by popularity.
+* **Deployment:** Hosted securely in the cloud (Railway) with the database actively connected.
+
+## Slide 6: Performance Tuning (Indexes)
+* **The Problem:** Querying and filtering a database with a 19-million-row table (`user_ratings`) and thousands of join relationships can take several minutes per search.
+* **The Solution:** Strategic PostgreSQL Indexing.
+* **Indexes Created:**
+  * **Primary Keys:** Naturally indexed for fast Game -> Mechanic lookups.
+  * **Reverse Lookups:** `CREATE INDEX idx_game_mechanics_mechanic_id ON game_mechanics (mechanic_id);` (Instant Mechanic -> Game lookups).
+  * **Ratings Speed:** `CREATE INDEX idx_user_ratings_bgg_id ON user_ratings(bgg_id);`
+  * **Filter Speed:** B-Tree Indexes on `games.avg_rating`, `games.game_weight`, and `games.num_user_ratings`.
+* **The Result:** Multi-faceted complex filtering queries across millions of rows execute in milliseconds.
