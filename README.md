@@ -1,8 +1,8 @@
 # 🎲 Board Game Index
 
-**Live Demo:** [board-game-index.up.railway.app](https://board-game-index.up.railway.app)
-
 ![Board Game Index UI](BoardGameIndex.png)
+
+**Live Demo:** [board-game-index.up.railway.app](https://board-game-index.up.railway.app)
 
 ## Overview
 **Board Game Index** is a lightning-fast, cloud-hosted web application that allows you to explore, search, and filter a massive database of over 21,000 board games. 
